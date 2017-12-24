@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import uuid from 'uuid';
 import { select } from 'd3';
 
 import './style.css';
+import SvgTextElement from './SvgTextElement';
+import ForeignObjectElement from './ForeignObjectElement';
 
 export default class Node extends React.Component {
   constructor(props) {
@@ -95,7 +96,7 @@ export default class Node extends React.Component {
   }
 
   render() {
-    const { nodeData, nodeSvgShape, textLayout, styles } = this.props;
+    const { nodeData, nodeSvgShape, nodeSize, nodeComponent, styles } = this.props;
     const nodeStyle = nodeData._children ? { ...styles.node } : { ...styles.leafNode };
     return (
       <g
@@ -120,37 +121,18 @@ export default class Node extends React.Component {
           })
         )}
 
-        <text
-          className="nodeNameBase"
-          style={nodeStyle.name}
-          textAnchor={textLayout.textAnchor}
-          x={textLayout.x}
-          y={textLayout.y}
-          transform={textLayout.transform}
-          dy=".35em"
-        >
-          {this.props.name}
-        </text>
-        <text
-          className="nodeAttributesBase"
-          y={textLayout.y + 10}
-          textAnchor={textLayout.textAnchor}
-          transform={textLayout.transform}
-          style={nodeStyle.attributes}
-        >
-          {this.props.attributes &&
-            Object.keys(this.props.attributes).map(labelKey => (
-              <tspan x={textLayout.x} dy="1.2em" key={uuid.v4()}>
-                {labelKey}: {this.props.attributes[labelKey]}
-              </tspan>
-            ))}
-        </text>
+        {nodeComponent ? (
+          <ForeignObjectElement nodeData={nodeData} nodeSize={nodeSize} {...nodeComponent} />
+        ) : (
+          <SvgTextElement {...this.props} nodeStyle={nodeStyle} />
+        )}
       </g>
     );
   }
 }
 
 Node.defaultProps = {
+  nodeComponent: null,
   attributes: undefined,
   circleRadius: undefined,
   styles: {
@@ -170,6 +152,8 @@ Node.defaultProps = {
 Node.propTypes = {
   nodeData: PropTypes.object.isRequired,
   nodeSvgShape: PropTypes.object.isRequired,
+  nodeComponent: PropTypes.object,
+  nodeSize: PropTypes.object.isRequired,
   orientation: PropTypes.oneOf(['horizontal', 'vertical']).isRequired,
   transitionDuration: PropTypes.number.isRequired,
   onClick: PropTypes.func.isRequired,
